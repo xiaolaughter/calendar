@@ -8,7 +8,7 @@
       <div class='calendar'>
         <!-- month change -->
         <div class='month_switch'>
-          <input type="button" name="" value="＜" @test="showListContent()" @click="preMonth()">
+          <input type="button" name="" value="＜" @click="preMonth()">
           <div class="month_switch_text"> {{ dateTitle_month }} </div>
           <input type="button" name="" value="＞" @click="nextMonth()"> 
         </div>
@@ -26,7 +26,6 @@
 
 <script>
 import DateGrid from './components/DateGrid.vue'
-import ScheduleScreen from './components/ScheduleScreen.vue'
 import TodoSideBar from './components/TodoSideBar.vue'
 import { ref, computed, onMounted } from "vue";
 
@@ -34,7 +33,6 @@ export default {
   name: 'App',
   components: {
     DateGrid,
-    ScheduleScreen,
     TodoSideBar
   },
   setup() {
@@ -49,7 +47,6 @@ export default {
         edit: bool
       }
       */
-      const isShowToDoList = ref(false);
       const date = ref(new Date());
       const selectDate = ref( date.value.toLocaleDateString().replaceAll('/','-') );
 
@@ -109,9 +106,7 @@ export default {
       }
 
       const showListContent = function(dateStr) {
-        // isShowToDoList.value = true;
         selectDate.value = dateStr;
-        console.log(selectDate.value);
       };
 
       const isWeekNormalDay = function(weekName){
@@ -169,7 +164,6 @@ export default {
       });
 
       return {
-        isShowToDoList,
         date,
         selectDate,
         selectDaySchedule,
