@@ -1,10 +1,11 @@
 <template>
-    <div @click="emitShowToDoList" :class="{'grid-day':true, 'gary': props.day.isNowMonth, 'red': props.day.isToday, 'holiday': props.day.isHoliday}">
+    <div :class="['grid-day', {'gary': !props.day.isNowMonth, 'red': props.day.isToday, 'holiday': props.day.isHoliday}]" @click=" $emit('show-todo-list', props.day.date) ">
       <div :class="['day', {'day_today':props.day.isToday, 'day_select':props.day.isSelectDay}]"> {{ dayOfdate }} </div>
       <div class="previewTodo"> 
         <ul>
-          <li v-if="props.day.schedule.length>0"> {{ props.day.schedule[0].content }}</li>
-          <li v-if="props.day.schedule.length>1">{{ props.day.schedule[1].content }}</li>
+          <template v-for=" (schedule, index) in props.day.schedule ">
+            <li v-if="index < 2"> {{ schedule.content }}</li>
+          </template>
           <li v-if="props.day.schedule.length>2">還有其他{{ props.day.schedule.length-2 }}項</li>
         </ul> 
       </div>
@@ -21,17 +22,16 @@ export default {
   },
   setup(props, context) {
       const dayOfdate = computed(() => {
-        return props.day.date.split('-')[2];
+        let day = props.day.date.split('-')[2];
+        if (day<10) {
+          day = day.substr(1,1);
+        }
+        return day;
       });
-
-      const emitShowToDoList = () => {
-        context.emit('show-todo-list', props.day.date);
-      };
 
       return {
         props,
-        dayOfdate,
-        emitShowToDoList
+        dayOfdate
       };
     }
 }
@@ -48,9 +48,10 @@ ul {
 }
 
 li {
-  overflow: scroll;
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  width: 90%;
 }
 
 .grid-day {

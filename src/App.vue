@@ -1,10 +1,7 @@
 <template>
-  <!-- if click day, show to do screen -->
-  <ScheduleScreen v-if="isShowToDoList" :date="selectDate" :schedule="selectDaySchedule" @close="isShowToDoList=false" @add-list-item="addListItem" @del-list-item="delListItem"></ScheduleScreen>
-  
+    <!-- left area -->  
     <TodoSideBar :date="selectDate" :schedule="selectDaySchedule" @add-list-item="addListItem" @del-list-item="delListItem"></TodoSideBar>
     <div>
-     
       <div class='calendar'>
         <!-- month change -->
         <div class='month_switch'>
@@ -13,9 +10,9 @@
           <input type="button" name="" value="＞" @click="nextMonth()"> 
         </div>
          <!-- week header -->
-        <div v-text="weekName" :class="['week', { 'weeknormalday': isWeekNormalDay(weekName), 'weekholiday': !isWeekNormalDay(weekName) }]" v-for="weekName in weekNames" :key="weekName"></div>
+        <div v-for="weekName in weekNames" :key="weekName" :class="['week', { 'weeknormalday': isWeekNormalDay(weekName), 'weekholiday': !isWeekNormalDay(weekName) }]"> {{ weekName }} </div>
         <!-- day component -->
-        <DateGrid :day="dayObj" v-for="dayObj in canlenderArr" :key="dayObj" @show-todo-list="showListContent"></DateGrid>
+        <DateGrid v-for="dayObj in canlenderArr" :day="dayObj" :key="dayObj" @show-todo-list="showListContent"></DateGrid>
       </div>
     </div>
     
@@ -25,9 +22,11 @@
 </template>
 
 <script>
+import FackData from './assets/FackData.js'
 import DateGrid from './components/DateGrid.vue'
 import TodoSideBar from './components/TodoSideBar.vue'
 import { ref, computed, onMounted } from "vue";
+import { DateTime } from "luxon";
 
 export default {
   name: 'App',
@@ -37,58 +36,22 @@ export default {
   },
   setup() {
       const defaultSchedule = ref([]);
-      /*
-      defaultSchedule formate
-      {
-        id: date.getTime(),
-        date: 'yyyy-m-d',
-        content: string,
-        state: bool,
-        edit: bool
-      }
-      */
-      const date = ref(new Date());
-      const selectDate = ref( date.value.toLocaleDateString().replaceAll('/','-') );
+      const date = ref(DateTime.now());
+      const selectDate = ref( date.value.toFormat('yyyy-MM-dd') );
 
       onMounted(() => {
-        defaultSchedule.value.push({
-          id: 1658107621839,
-          date: '2022-8-10',
-          content: 'edit to do content',
-          state: false,
-          edit: false
-        });
-        defaultSchedule.value.push({
-          id: 1658107621840,
-          date: '2022-8-10',
-          content: 'edit to do content',
-          state: false,
-          edit: false
-        });
-        defaultSchedule.value.push({
-          id: 1658107621841,
-          date: '2022-8-9',
-          content: 'edit to do content',
-          state: false,
-          edit: false
-        });
+        defaultSchedule.value = FackData.fackSchedule;
       });
 
       const nextMonth = function() {
-        var dateNextMonth = new Date(date.value.getTime());
-        dateNextMonth.setDate(this.dayCountOfMonth);
-        dateNextMonth = new Date(dateNextMonth.getTime() + (60 * 60 * 24 * 1000));
-        date.value = dateNextMonth;
+        date.value = date.value.plus({month: 1})
       }
 
       const preMonth = function() {
-        var preMonthDate = new Date(date.value.getTime());
-        preMonthDate.setDate(1);
-        preMonthDate = new Date(preMonthDate.getTime() - (60 * 60 * 24 * 1000));
-        date.value = preMonthDate;
+        date.value = date.value.plus({month: -1})
       }
 
-      const addListItem = function(date) {
+      const addListItem = date => {
         defaultSchedule.value.push({
           id: new Date().getTime(),
           date: selectDate.value,
@@ -96,69 +59,55 @@ export default {
           state: false,
           edit: true
         });
-        console.log(defaultSchedule.value);
       }
 
-      const delListItem = function(id) {
-        defaultSchedule.value = defaultSchedule.value.filter((item) => {
-          return item.id != id;
-        })
+      const delListItem = id => {
+        defaultSchedule.value = defaultSchedule.value.filter( item => item.id != id );
       }
 
-      const showListContent = function(dateStr) {
+      const showListContent = dateStr => {
         selectDate.value = dateStr;
       };
 
-      const isWeekNormalDay = function(weekName){
-        return weekName != 'SAT' && weekName != 'SUN';
-      };
+      const isWeekNormalDay = weekName => weekName != 'SAT' && weekName != 'SUN';
+      
 
       const selectDaySchedule = computed(() => {
-        return defaultSchedule.value.filter((v) => {
-          return v.date == selectDate.value;
-        });
+        return defaultSchedule.value.filter( schedule => schedule.date == selectDate.value );
       });
 
       const dateTitle_full = computed(() => {
-        return date.value.getFullYear() + '-' + date.value.getMonth() + '-' + date.value.getDay();
+        return date.value.toFormat('yyyy-MM-dd') ;
       });
 
       const dateTitle_month = computed(() => {
-        return date.value.getFullYear() + '-' + (date.value.getMonth()+1);
+        return date.value.toFormat('yyyy-MM') ;
       });
       
 
       const dayCountOfMonth = computed(() => {
-        var allDayDate = new Date(date.value.getTime());
-        allDayDate.setDate(28);
-        allDayDate = new Date(allDayDate.getTime() + 60 * 60 * 24 * 4 * 1000);
-        allDayDate.setDate(1);
-        allDayDate = new Date(allDayDate.getTime() - 60 * 60 * 24 * 1000);
-        return allDayDate.getDate();
+        return date.value.endOf('month').toObject().day;
       });
 
       const canlenderArr = computed(() => {
-        console.log("canlenderArr");
-        var nowCanlenderContent = [],
-          today = new Date(),
-          startDate = new Date(date.value.getTime()),
-          nowMonth = startDate.getMonth();
+        let nowCanlenderContent = [],
+          today = DateTime.now(),
+          startDate = date.value.startOf('month');
+          startDate = startDate.plus({ day: -startDate.weekday });
 
-        startDate.setDate(1);
-        startDate = new Date(startDate.getTime() - (startDate.getDay() * 24 * 60 * 60 * 1000));
-        let dateStr = startDate.getFullYear() + '-' + (startDate.getMonth() + 1) + '-' + startDate.getDate();
-        for (var i = 0; i < 42; i++) {
-          let dateInFor = startDate.toLocaleDateString().replaceAll('/', '-');
-          let isToday = today.getMonth() == startDate.getMonth() && today.getDate() == startDate.getDate();
+        for (let i = 0; i < 42; i++) {
+          let dateInFor = startDate.toFormat('yyyy-MM-dd');
+          let isToday = today.year == startDate.year && today.month == startDate.month && today.day == startDate.day;
           nowCanlenderContent.push({
             date: dateInFor,
-            isNowMonth: nowMonth != startDate.getMonth(),
+            isNowMonth: date.value.month == startDate.month,
             isToday: isToday,
             isSelectDay: (dateInFor == selectDate.value) && !isToday,
             isHoliday: i % 7 == 0 || i % 7 == 6,
-            schedule: defaultSchedule.value.filter((v) => { return v.date == dateInFor })
+            schedule: defaultSchedule.value.filter((schedule) => { return schedule.date == dateInFor })
           });
-          startDate = new Date(startDate.getTime() + (24 * 60 * 60 * 1000));
+
+          startDate = startDate.plus({ day: 1 });
         }
         return nowCanlenderContent;
       });

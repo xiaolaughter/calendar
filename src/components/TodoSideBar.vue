@@ -1,8 +1,8 @@
 <template>
     <div id="contianerBar">
-      <div id="day"> {{ props.date.split('-')[2]}} </div>
+      <div id="day"> {{ day_title }} </div>
       <div id="month_year"> {{ month_year_title }} </div>
-      <div id="todoList" :class="{'todolist-none':isNoneSchedule}" @dblclick="emit('add-list-item')">
+      <div id="todoList" :class="{'todolist-none':isNoneSchedule}" @dblclick=" $emit('add-list-item') ">
         <div v-if="isNoneSchedule">double click here to add new ToDoList</div>
         <template v-for="listItem in props.schedule" :key="listItem">
             <div class="listItem">
@@ -12,7 +12,7 @@
                   @keyup.enter="verifyToDoListContent(listItem)">
                 <div v-else class="" @click="listItem.edit=true">{{listItem.content}}</div>
               </div>
-              <div class="listItem-del" @click="emit('del-list-item', listItem.id)"></div>
+              <div class="listItem-del" @click=" $emit('del-list-item', listItem.id)"></div>
             </div>
           </template>
       </div>
@@ -21,6 +21,7 @@
 
 <script>
 import { computed } from "vue";
+import { DateTime } from "luxon";
 
 const focus = {
   mounted: (el) => el.focus()
@@ -44,12 +45,16 @@ export default {
       return monthName + ' ' + props.date.split('-')[0];
     });
 
+    const day_title = computed(() => {
+      if (props.date == '') { return ''; }
+      return props.date.split('-')[2];
+    });
+
     const isNoneSchedule = computed(()=>{
-      console.log(props.schedule.length);
       return props.schedule.length == 0;
     });
 
-    const verifyToDoListContent = (listItem) => {
+    const verifyToDoListContent = listItem => {
       if(listItem.content.trim() == ''){
         context.emit('del-list-item', listItem.id);
       }else{
@@ -57,20 +62,11 @@ export default {
       }
     };
 
-    const test = () => {
-      console.log("test");
-    };
-
-    // const emitShowToDoList = () => {
-    //   context.emit('show-todo-list', props.day.date);
-    // };
-
     return {
       props,
       month_year_title,
+      day_title,
       isNoneSchedule,
-      emit: context.emit,
-      test,
       verifyToDoListContent
     };
   }
